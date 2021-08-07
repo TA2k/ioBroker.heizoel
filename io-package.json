@@ -80,7 +80,10 @@
         "unloading_points": "1",
         "hose": "fortyMetre",
         "short_vehicle": "withTrailer",
-        "interval": 60
+        "interval": 60,
+        "esyActive": true,
+        "hoDe": false,
+        "hoAt": false
     },
     "objects": [],
     "instanceObjects": [
