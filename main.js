@@ -108,6 +108,7 @@ class Heizoel extends utils.Adapter {
             .catch((error) => {
                 this.setState("info.connection", false, true);
                 this.log.error(error);
+                this.log.error("Failed to receive EsyOil please check your zip code");
                 error.response && this.log.debug(JSON.stringify(error.response.data));
             });
     }
@@ -243,6 +244,7 @@ class Heizoel extends utils.Adapter {
             })
             .catch((error) => {
                 this.setState("info.connection", false, true);
+                this.log.error("Failed to receive HOE24 please check your zip code");
                 this.log.error(error);
                 error.response && this.log.debug(JSON.stringify(error.response.data));
             });
