@@ -115,7 +115,7 @@ class Heizoel extends utils.Adapter {
         const parsedAmount = Number(amount);
         const data = {
             ZipCode: this.config.plz,
-            Amount: amount,
+            Amount: parsedAmount,
             Stations: this.config.unloading_points,
             Parameters: [
                 {
