@@ -112,11 +112,13 @@ class Heizoel extends utils.Adapter {
             });
     }
     async getHo24(amount, country) {
+        let url = "https://www.heizoel24.de/api/kalkulation/berechnen";
+
         const parsedAmount = Number(amount);
         const data = {
             ZipCode: this.config.plz,
             Amount: parsedAmount,
-            Stations: this.config.unloading_points,
+            Stations: Number(this.config.unloading_points),
             Parameters: [
                 {
                     Key: "MaxDelivery",
@@ -207,18 +209,21 @@ class Heizoel extends utils.Adapter {
             Ordering: 0,
             UpsellCount: 0,
         };
+        if (country === 2) {
+            url = "https://www.heizoel24.at/api/kalkulation/berechnen";
+            data.Product.Id = 6;
+        }
         await this.requestClient({
             method: "post",
-            url: "https://www.heizoel24.de/api/kalkulation/berechnen",
+            url: url,
             headers: {
-                authority: "www.heizoel24.de",
                 accept: "application/json, text/plain, */*",
                 "content-type": "application/json;charset=UTF-8",
                 "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.25 Safari/537.36",
                 origin: "https://www.heizoel24.de",
                 "accept-language": "de,en;q=0.9",
             },
-            data: JSON.stringify(data),
+            data: data,
         })
             .then(async (res) => {
                 this.log.debug(JSON.stringify(res.data));
@@ -227,14 +232,14 @@ class Heizoel extends utils.Adapter {
                 }
 
                 this.setState("info.connection", true, true);
-                await this.setObjectNotExistsAsync("ho24" + amount, {
+                await this.setObjectNotExistsAsync("hoe" + amount, {
                     type: "device",
                     common: {
                         name: "Heizöl24 Preise für " + amount + "l",
                     },
                     native: {},
                 });
-                this.extractKeys(this, "ho24" + amount, res.data.Items);
+                this.extractKeys(this, "hoe" + amount, res.data, null, true);
             })
             .catch((error) => {
                 this.setState("info.connection", false, true);
