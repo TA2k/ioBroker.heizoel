@@ -1,0 +1,109 @@
+{
+    "common": {
+        "name": "heizoel",
+        "version": "1.0.0",
+        "news": {
+            "1.0.0": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "zh-cn": "首次出版"
+            }
+        },
+        "titleLang": {
+            "en": "Heizöl",
+            "de": "Heizöl",
+            "ru": "Heizöl",
+            "pt": "Heizöl",
+            "nl": "Heizöl",
+            "fr": "Heizöl",
+            "it": "Heizöl",
+            "es": "Heizöl",
+            "pl": "Heizöl",
+            "zh-cn": "宝马"
+        },
+        "desc": {
+            "en": "Adapter receives current heating oil prices",
+            "de": "Adapter holt aktuelle Heizölpreise",
+            "ru": "Адаптер получает текущие цены на мазут",
+            "pt": "Adaptador recebe preços atuais de óleo para aquecimento",
+            "nl": "Adapter ontvangt actuele stookolieprijzen",
+            "fr": "L'adaptateur reçoit les prix actuels du mazout de chauffage",
+            "it": "L'adattatore riceve i prezzi correnti del gasolio",
+            "es": "El adaptador recibe los precios actuales del gasóleo para calefacción",
+            "pl": "Adapter odbiera aktualne ceny oleju opałowego",
+            "zh-cn": "适配器接收当前取暖油价格"
+        },
+        "authors": [
+            "TA2k <tombox2020@gmail.com>"
+        ],
+        "keywords": [
+            "Heizöl"
+        ],
+        "license": "MIT",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "heizoel.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/TA2k/ioBroker.heizoel/master/admin/heizoel.png",
+        "readme": "https://github.com/TA2k/ioBroker.heizoel/blob/master/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "metering",
+        "compact": true,
+        "connectionType": "cloud",
+        "dataSource": "poll",
+        "materialize": true,
+        "dependencies": [
+            {
+                "js-controller": ">=3.0.0"
+            }
+        ],
+        "globalDependencies": [
+            {
+                "admin": ">=4.0.9"
+            }
+        ]
+    },
+    "native": {
+        "plz": "",
+        "amount": "3000",
+        "deliveryTimes": "normal",
+        "payment_type": "ec",
+        "prod": "normal",
+        "unloading_points": "1",
+        "hose": "fortyMetre",
+        "short_vehicle": "withTrailer",
+        "interval": 5
+    },
+    "objects": [],
+    "instanceObjects": [
+        {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "Device or service connected",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
+    ]
+}
