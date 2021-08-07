@@ -86,7 +86,7 @@ class Heizoel extends utils.Adapter {
                     await this.setObjectNotExistsAsync(amount, {
                         type: "device",
                         common: {
-                            name: "Preise für " + amount,
+                            name: "Preise für " + amount + "l",
                         },
                         native: {},
                     });
