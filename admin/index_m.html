@@ -80,72 +80,83 @@
                     <label for="amount" class="translate">Menge in Litern, mehrere Werte mit Komma trennen "1000, 2000, 5000"</label>
                 </div>
             </div>
-        
-            <div>
-            <select id="deliveryTimes">
-                <option selected="selected" value="normal" data-v-24d6182c="">ohne</option>
-                <option value="weekTimeOne" data-v-24d6182c="">7:00 - 12:00 Uhr</option>
-                <option value="weekTimeTwo" data-v-24d6182c="">12:00 - 17:00 Uhr</option>
-                <option data-v-24d6182c="" value="twoWorkingDays">2 Wochentage (Express)</option>
-                <option data-v-24d6182c="" value="threeFiveDays">3 - 5 Wochentage (Mo.-Fr.)</option>
-                <option data-v-24d6182c="" value="fiveTenDays">6 - 10 Wochentage (Mo.-Fr.)</option>
-            </select>
-            <label for="deliveryTimes" class="translate">Liefertermin</label>
-        </div>
-           
-            <div>
-            <select id="payment_type">
-                <option selected="selected" value="ec" data-v-24d6182c="">EC-Karte</option>
-                <option value="cash" data-v-24d6182c="">Barzahlung</option>
-                <option value="guaranteedPayment" data-v-24d6182c="">Ratenkauf</option>
-                <option value="invoice" data-v-24d6182c="">Rechnung</option>
-                <option value="directDebit" data-v-24d6182c="">Lastschrift</option>
-                <option value="inAdvance" data-v-24d6182c="">Vorkasse</option>
-            </select>
-            <label for="payment_type" class="translate">Zahlungsart</label>
-        </div>
-            
-            <div>
-            <select id="prod">
-                <option selected="selected" value="normal" data-v-24d6182c="">Normal Schwefelarm</option>
-                <option value="premium" data-v-24d6182c="">Premium Schwefelarm</option>
-                <option value="climateNeutralPremium" data-v-24d6182c="">Klimaneutral Premium</option>
-                <option value="climateNeutralNormal" data-v-24d6182c="">Klimaneutral Normal</option>
-            </select>
-            <label for="prod" class="translate">Sorte</label>
-        </div>
-            
-            <div>
-            <select id="unloading_points">
-                <option selected="selected" value="1"></option>1</option>
-                <option value="2" data-v-24d6182c="">2</option>
-                <option value="3" data-v-24d6182c="">3</option>
-                <option value="4" data-v-24d6182c="">4</option>
-                <option value="5" data-v-24d6182c="">5</option>
-                <option value="6" data-v-24d6182c="">6</option>
-                <option value="7" data-v-24d6182c="">7</option>
-                <option value="8" data-v-24d6182c="">8</option>
-                <option value="9" data-v-24d6182c="">9</option>
-            </select>
-            <label for="unloading_points" class="translate">Entladestellen</label>
-        </div>
-            
-            <div>
-            <select id="hose">
-                <option selected="selected" value="fortyMetre" data-v-24d6182c="">40 Meter</option>
-                <option value="sixtyMetre" data-v-24d6182c="">60 Meter</option>
-                <option value="eightyMetre" data-v-24d6182c="">80 Meter</option>
-            </select>
-            <label for="hose" class="translate">Schlauchlänge</label>
-        </div>
-            <div>
-            <select id="short_vehicle">
-                <option selected="selected" value="withTrailer" data-v-24d6182c="">Mit Anhänger möglich</option>
-                <option value="withoutTrailer" data-v-24d6182c="">Ohne Anhänger</option>
-            </select>   
-              <label for="short_vehicle" class="translate">Tankwagen
-            </label>
-        </div>
+
+            <div class="row">
+                <div class="col s6 input-field">
+                    <select id="deliveryTimes">
+                        <option selected="selected" value="normal">ohne</option>
+                        <option value="weekTimeOne">7:00 - 12:00 Uhr</option>
+                        <option value="weekTimeTwo">12:00 - 17:00 Uhr</option>
+                        <option value="twoWorkingDays">2 Wochentage (Express)</option>
+                        <option value="threeFiveDays">3 - 5 Wochentage (Mo.-Fr.)</option>
+                        <option value="fiveTenDays">6 - 10 Wochentage (Mo.-Fr.)</option>
+                    </select>
+                    <label for="deliveryTimes" class="translate">Liefertermin</label>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s6 input-field">
+                    <select id="payment_type">
+                        <option selected="selected" value="ec">EC-Karte</option>
+                        <option value="cash">Barzahlung</option>
+                        <option value="guaranteedPayment">Ratenkauf</option>
+                        <option value="invoice">Rechnung</option>
+                        <option value="directDebit">Lastschrift</option>
+                        <option value="inAdvance">Vorkasse</option>
+                    </select>
+                    <label for="payment_type" class="translate">Zahlungsart</label>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s6 input-field">
+                    <select id="prod">
+                        <option selected="selected" value="normal">Normal Schwefelarm</option>
+                        <option value="premium">Premium Schwefelarm</option>
+                        <option value="climateNeutralPremium">Klimaneutral Premium</option>
+                        <option value="climateNeutralNormal">Klimaneutral Normal</option>
+                    </select>
+                    <label for="prod" class="translate">Sorte</label>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s6 input-field">
+                    <select id="unloading_points">
+                        <option selected="selected" value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                    </select>
+                    <label for="unloading_points" class="translate">Entladestellen</label>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col s6 input-field">
+                    <select id="hose">
+                        <option selected="selected" value="fortyMetre">40 Meter</option>
+                        <option value="sixtyMetre">60 Meter</option>
+                        <option value="eightyMetre">80 Meter</option>
+                    </select>
+                    <label for="hose" class="translate">Schlauchlänge</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col s6 input-field">
+                    <select id="short_vehicle">
+                        <option selected="selected" value="withTrailer">Mit Anhänger möglich</option>
+                        <option value="withoutTrailer">Ohne Anhänger</option>
+                    </select>
+                    <label for="short_vehicle" class="translate">Tankwagen </label>
+                </div>
+            </div>
 
             <div class="row">
                 <div class="col s2 input-field">
