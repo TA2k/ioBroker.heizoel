@@ -81,6 +81,8 @@ class Heizoel extends utils.Adapter {
                     if (!res.data) {
                         return;
                     }
+
+                    this.setState("info.connection", true, true);
                     await this.setObjectNotExistsAsync(amount, {
                         type: "device",
                         common: {
@@ -91,6 +93,7 @@ class Heizoel extends utils.Adapter {
                     this.extractKeys(this, amount, res.data);
                 })
                 .catch((error) => {
+                    this.setState("info.connection", false, true);
                     this.log.error(error);
                     error.response && this.log.debug(JSON.stringify(error.response.data));
                 });
