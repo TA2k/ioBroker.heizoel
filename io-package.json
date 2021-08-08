@@ -18,16 +18,16 @@
         },
         "title": "Heizöl",
         "titleLang": {
-            "en": "Heizöl",
+            "en": "heating oil",
             "de": "Heizöl",
-            "ru": "Heizöl",
-            "pt": "Heizöl",
-            "nl": "Heizöl",
-            "fr": "Heizöl",
-            "it": "Heizöl",
-            "es": "Heizöl",
-            "pl": "Heizöl",
-            "zh-cn": "宝马"
+            "ru": "топочный мазут",
+            "pt": "óleo de aquecimento",
+            "nl": "olie verhitten",
+            "fr": "l'huile de chauffage",
+            "it": "olio bollente",
+            "es": "aceite de calefaccion",
+            "pl": "olej opałowy",
+            "zh-cn": "取暖油"
         },
         "desc": {
             "en": "Adapter receives current heating oil prices",
