@@ -108,6 +108,18 @@
                 "def": false
             },
             "native": {}
+        },
+        {
+            "_id": "dynamicAmount",
+            "type": "state",
+            "common": {
+                "role": "level",
+                "name": "Dynamic amount to check",
+                "type": "number",
+                "read": true,
+                "write": true
+            },
+            "native": {}
         }
     ]
 }

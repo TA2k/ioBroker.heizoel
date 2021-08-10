@@ -40,6 +40,7 @@ class Heizoel extends utils.Adapter {
         this.extractKeys = extractKeys;
         const amountTrimmed = this.config.amount.replace(/ /g, "");
         this.amountArray = amountTrimmed.split(",");
+        this.amountArray.push("dynamic");
 
         await this.updatePrice();
         this.updateInterval = setInterval(async () => {
@@ -66,6 +67,14 @@ class Heizoel extends utils.Adapter {
 
     async getEsy(amount) {
         const parsedAmount = Number(amount);
+        if (amount === "dynamic") {
+            const dynamicValueState = await this.getStateAsync("dynamicValue");
+            if (dynamicValueState && dynamicValueState.val) {
+                parsedAmount = Number(dynamicValueState.val);
+            } else {
+                return;
+            }
+        }
         await this.requestClient({
             method: "post",
             url: "https://backbone.esyoil.com/heating-oil-calculator/v1/calculate",
@@ -116,6 +125,14 @@ class Heizoel extends utils.Adapter {
         let url = "https://www.heizoel24.de/api/kalkulation/berechnen";
 
         const parsedAmount = Number(amount);
+        if (amount === "dynamic") {
+            const dynamicValueState = await this.getStateAsync("dynamicValue");
+            if (dynamicValueState && dynamicValueState.val) {
+                parsedAmount = Number(dynamicValueState.val);
+            } else {
+                return;
+            }
+        }
         const data = {
             ZipCode: this.config.plz,
             Amount: parsedAmount,
