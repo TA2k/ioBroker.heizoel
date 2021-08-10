@@ -50,7 +50,7 @@ class Heizoel extends utils.Adapter {
 
     async updatePrice() {
         this.amountArray.forEach(async (amount) => {
-            if (isNaN(amount)) {
+            if (isNaN(amount) && amount !== "dynamic") {
                 return;
             }
             if (this.config.esyActive) {
@@ -66,9 +66,9 @@ class Heizoel extends utils.Adapter {
     }
 
     async getEsy(amount) {
-        const parsedAmount = Number(amount);
+        let parsedAmount = Number(amount);
         if (amount === "dynamic") {
-            const dynamicValueState = await this.getStateAsync("dynamicValue");
+            const dynamicValueState = await this.getStateAsync("dynamicAmount");
             if (dynamicValueState && dynamicValueState.val) {
                 parsedAmount = Number(dynamicValueState.val);
             } else {
@@ -124,9 +124,9 @@ class Heizoel extends utils.Adapter {
     async getHo24(amount, country) {
         let url = "https://www.heizoel24.de/api/kalkulation/berechnen";
 
-        const parsedAmount = Number(amount);
+        let parsedAmount = Number(amount);
         if (amount === "dynamic") {
-            const dynamicValueState = await this.getStateAsync("dynamicValue");
+            const dynamicValueState = await this.getStateAsync("dynamicAmount");
             if (dynamicValueState && dynamicValueState.val) {
                 parsedAmount = Number(dynamicValueState.val);
             } else {
