@@ -56,7 +56,7 @@
         "readme": "https://github.com/TA2k/ioBroker.heizoel/blob/master/README.md",
         "loglevel": "info",
         "mode": "daemon",
-        "type": "metering",
+        "type": "misc-data",
         "compact": true,
         "connectionType": "cloud",
         "dataSource": "poll",

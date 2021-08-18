@@ -30,9 +30,9 @@ class Heizoel extends utils.Adapter {
     async onReady() {
         // Reset the connection indicator during startup
         this.setState("info.connection", false, true);
-        if (this.config.interval < 0.5) {
-            this.log.info("Set interval to minimum 0.5");
-            this.config.interval = 0.5;
+        if (this.config.interval < 30) {
+            this.log.info("Set interval to minimum 30");
+            this.config.interval = 30;
         }
         this.updateInterval = null;
 
