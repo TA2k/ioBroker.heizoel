@@ -58,6 +58,7 @@
         "extIcon": "https://raw.githubusercontent.com/TA2k/ioBroker.heizoel/master/admin/heizoel.png",
         "readme": "https://github.com/TA2k/ioBroker.heizoel/blob/master/README.md",
         "loglevel": "info",
+        "tier": 2,
         "mode": "daemon",
         "type": "misc-data",
         "compact": true,
