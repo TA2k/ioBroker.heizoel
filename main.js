@@ -137,8 +137,9 @@ class Heizoel extends utils.Adapter {
      * only truly unexpected responses are errors.
      * @param {*} error axios error
      * @param {string} source human readable source incl. amount, e.g. "EsyOil (3000l)"
+     * @param {object} [params] the parameters that were actually sent, logged on 422
      */
-    handleRequestError(error, source) {
+    handleRequestError(error, source, params) {
         if (!error.response) {
             this.log.warn(`${source}: no response from server (${error.message}). Retrying on next interval.`);
             return;
@@ -150,8 +151,9 @@ class Heizoel extends utils.Adapter {
         if (status === 422) {
             this.log.warn(
                 `${source}: no offer for the current parameters${message ? ` (${message})` : ""}. ` +
-                    `Please check the configured PLZ (${this.config.plz}), a large enough amount ` +
-                    "(EsyOil needs at least ~500 l), and that no delivery option is left empty.",
+                    "Please check the PLZ, a large enough amount (EsyOil needs at least ~500 l), " +
+                    "and that no delivery option is left empty. " +
+                    `Sent parameters: ${JSON.stringify(params || {})}`,
             );
             this.log.debug(JSON.stringify(error.response.data));
             return;
@@ -201,6 +203,16 @@ class Heizoel extends utils.Adapter {
                 return false;
             }
         }
+        const requestParams = {
+            zipcode: this.config.plz,
+            amount: parsedAmount,
+            unloading_points: this.esyParams.unloading_points,
+            payment_type: this.esyParams.payment_type,
+            prod: this.esyParams.prod,
+            hose: this.esyParams.hose,
+            short_vehicle: this.esyParams.short_vehicle,
+            deliveryTimes: this.esyParams.deliveryTimes,
+        };
         try {
             const res = await this.requestClient({
                 method: "post",
@@ -215,16 +227,7 @@ class Heizoel extends utils.Adapter {
                     referer: "https://www.esyoil.com/",
                     "accept-language": "de,en;q=0.9",
                 },
-                data: JSON.stringify({
-                    zipcode: this.config.plz,
-                    amount: parsedAmount,
-                    unloading_points: this.esyParams.unloading_points,
-                    payment_type: this.esyParams.payment_type,
-                    prod: this.esyParams.prod,
-                    hose: this.esyParams.hose,
-                    short_vehicle: this.esyParams.short_vehicle,
-                    deliveryTimes: this.esyParams.deliveryTimes,
-                }),
+                data: JSON.stringify(requestParams),
             });
             if (!res.data) {
                 this.log.debug(`EsyOil returned an empty response for ${amount}l.`);
@@ -242,7 +245,7 @@ class Heizoel extends utils.Adapter {
             this.extractKeys(this, amount, res.data);
             return true;
         } catch (error) {
-            this.handleRequestError(error, `EsyOil (${amount}l)`);
+            this.handleRequestError(error, `EsyOil (${amount}l)`, requestParams);
             return false;
         }
     }
@@ -389,7 +392,12 @@ class Heizoel extends utils.Adapter {
             this.extractKeys(this, "hoe" + amount, res.data, null, true);
             return true;
         } catch (error) {
-            this.handleRequestError(error, `${source} (${amount}l)`);
+            this.handleRequestError(error, `${source} (${amount}l)`, {
+                ZipCode: data.ZipCode,
+                Amount: data.Amount,
+                Stations: data.Stations,
+                CountryId: data.CountryId,
+            });
             return false;
         }
     }
