@@ -51,6 +51,10 @@ class Heizoel extends utils.Adapter {
             );
         }
 
+        // EsyOil rejects empty parameters with HTTP 422 ("No offer with these parameters").
+        // Fall back to sane defaults for empty fields and warn once, naming the affected field.
+        this.esyParams = this.buildEsyParams();
+
         const amountTrimmed = (this.config.amount || "").replace(/ /g, "");
         this.amountArray = amountTrimmed.split(",").filter((amount) => amount !== "");
         this.amountArray.push("dynamic");
@@ -96,6 +100,37 @@ class Heizoel extends utils.Adapter {
     }
 
     /**
+     * Builds the EsyOil request parameters, filling empty config fields with
+     * defaults. Empty values would otherwise make the API answer with HTTP 422
+     * ("No offer with these parameters"). Warns once per empty field.
+     * @returns {{payment_type: string, prod: string, hose: string, short_vehicle: string, deliveryTimes: string, unloading_points: number}}
+     */
+    buildEsyParams() {
+        const defaults = {
+            payment_type: "ec",
+            prod: "normal",
+            hose: "fortyMetre",
+            short_vehicle: "withTrailer",
+            deliveryTimes: "normal",
+        };
+        const params = {};
+        for (const [key, fallback] of Object.entries(defaults)) {
+            if (this.config[key]) {
+                params[key] = this.config[key];
+            } else {
+                params[key] = fallback;
+                this.log.warn(
+                    `EsyOil: option "${key}" is empty, falling back to "${fallback}". ` +
+                        "Please open and save the adapter settings to set it explicitly.",
+                );
+            }
+        }
+        const unloadingPoints = Number(this.config.unloading_points);
+        params.unloading_points = unloadingPoints > 0 ? unloadingPoints : 1;
+        return params;
+    }
+
+    /**
      * Turns an axios error into a log message with the appropriate level.
      * Transient issues (network, rate limit, server errors) and expected
      * business responses (422 = no offer for these parameters) are warnings,
@@ -115,7 +150,8 @@ class Heizoel extends utils.Adapter {
         if (status === 422) {
             this.log.warn(
                 `${source}: no offer for the current parameters${message ? ` (${message})` : ""}. ` +
-                    `Please check the configured PLZ (${this.config.plz}) and amount.`,
+                    `Please check the configured PLZ (${this.config.plz}), a large enough amount ` +
+                    "(EsyOil needs at least ~500 l), and that no delivery option is left empty.",
             );
             this.log.debug(JSON.stringify(error.response.data));
             return;
@@ -182,12 +218,12 @@ class Heizoel extends utils.Adapter {
                 data: JSON.stringify({
                     zipcode: this.config.plz,
                     amount: parsedAmount,
-                    unloading_points: Number(this.config.unloading_points),
-                    payment_type: this.config.payment_type,
-                    prod: this.config.prod,
-                    hose: this.config.hose,
-                    short_vehicle: this.config.short_vehicle,
-                    deliveryTimes: this.config.deliveryTimes,
+                    unloading_points: this.esyParams.unloading_points,
+                    payment_type: this.esyParams.payment_type,
+                    prod: this.esyParams.prod,
+                    hose: this.esyParams.hose,
+                    short_vehicle: this.esyParams.short_vehicle,
+                    deliveryTimes: this.esyParams.deliveryTimes,
                 }),
             });
             if (!res.data) {
