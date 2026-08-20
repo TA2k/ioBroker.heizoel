@@ -31,15 +31,28 @@ class Heizoel extends utils.Adapter {
         // Reset the connection indicator during startup
         this.setState("info.connection", false, true);
         if (this.config.interval < 30) {
-            this.log.info("Set interval to minimum 30");
+            this.log.info("Configured interval is below the minimum, using 30 minutes.");
             this.config.interval = 30;
         }
         this.updateInterval = null;
 
-        this.requestClient = axios.create();
+        this.requestClient = axios.create({ timeout: 30000 });
         this.extractKeys = extractKeys;
-        const amountTrimmed = this.config.amount.replace(/ /g, "");
-        this.amountArray = amountTrimmed.split(",");
+
+        // Validate configuration once at startup and inform the user with the correct log level.
+        if (!this.config.plz) {
+            this.log.warn(
+                "No zip code (PLZ) is configured. Please enter your PLZ in the adapter settings, otherwise no prices can be retrieved.",
+            );
+        }
+        if (!this.config.esyActive && !this.config.hoDe && !this.config.hoAt) {
+            this.log.warn(
+                "No price source is enabled. Please activate EsyOil and/or Heizöl24 (DE/AT) in the adapter settings.",
+            );
+        }
+
+        const amountTrimmed = (this.config.amount || "").replace(/ /g, "");
+        this.amountArray = amountTrimmed.split(",").filter((amount) => amount !== "");
         this.amountArray.push("dynamic");
 
         await this.updatePrice();
@@ -49,20 +62,96 @@ class Heizoel extends utils.Adapter {
     }
 
     async updatePrice() {
-        this.amountArray.forEach(async (amount) => {
+        if (!this.config.plz) {
+            this.log.debug("Skipping price update because no PLZ is configured.");
+            this.setState("info.connection", false, true);
+            return;
+        }
+
+        const tasks = [];
+        for (const amount of this.amountArray) {
             if (isNaN(amount) && amount !== "dynamic") {
-                return;
+                this.log.debug(`Ignoring invalid amount "${amount}".`);
+                continue;
             }
             if (this.config.esyActive) {
-                await this.getEsy(amount);
+                tasks.push(this.getEsy(amount));
             }
             if (this.config.hoDe) {
-                await this.getHo24(amount, 1);
+                tasks.push(this.getHo24(amount, 1));
             }
             if (this.config.hoAt) {
-                await this.getHo24(amount, 2);
+                tasks.push(this.getHo24(amount, 2));
             }
-        });
+        }
+
+        if (!tasks.length) {
+            return;
+        }
+
+        // Only report connected when at least one request in this cycle succeeded.
+        const results = await Promise.all(tasks);
+        const success = results.some((result) => result === true);
+        this.setState("info.connection", success, true);
+    }
+
+    /**
+     * Turns an axios error into a log message with the appropriate level.
+     * Transient issues (network, rate limit, server errors) and expected
+     * business responses (422 = no offer for these parameters) are warnings,
+     * only truly unexpected responses are errors.
+     * @param {*} error axios error
+     * @param {string} source human readable source incl. amount, e.g. "EsyOil (3000l)"
+     */
+    handleRequestError(error, source) {
+        if (!error.response) {
+            this.log.warn(`${source}: no response from server (${error.message}). Retrying on next interval.`);
+            return;
+        }
+
+        const status = error.response.status;
+        const message = this.extractApiMessage(error.response.data);
+
+        if (status === 422) {
+            this.log.warn(
+                `${source}: no offer for the current parameters${message ? ` (${message})` : ""}. ` +
+                    `Please check the configured PLZ (${this.config.plz}) and amount.`,
+            );
+            this.log.debug(JSON.stringify(error.response.data));
+            return;
+        }
+        if (status === 429) {
+            this.log.warn(`${source}: too many requests (HTTP 429). Consider a larger interval. Retrying later.`);
+            return;
+        }
+        if (status >= 500) {
+            this.log.warn(`${source}: server error (HTTP ${status}). Retrying on next interval.`);
+            return;
+        }
+
+        this.log.error(`${source}: request failed (HTTP ${status})${message ? `: ${message}` : ""}.`);
+        this.log.debug(JSON.stringify(error.response.data));
+    }
+
+    /**
+     * Extracts a readable message from an API error payload.
+     * @param {*} data response body
+     * @returns {string}
+     */
+    extractApiMessage(data) {
+        if (!data) {
+            return "";
+        }
+        if (typeof data === "string") {
+            return data;
+        }
+        if (Array.isArray(data.message)) {
+            return data.message.join(", ");
+        }
+        if (data.message) {
+            return data.message;
+        }
+        return "";
     }
 
     async getEsy(amount) {
@@ -72,54 +161,54 @@ class Heizoel extends utils.Adapter {
             if (dynamicValueState && dynamicValueState.val) {
                 parsedAmount = Number(dynamicValueState.val);
             } else {
-                return;
+                this.log.debug("EsyOil: no dynamicAmount set, skipping dynamic request.");
+                return false;
             }
         }
-        await this.requestClient({
-            method: "post",
-            url: "https://backbone.esyoil.com/heating-oil-calculator/v1/calculate",
-            headers: {
-                authority: "backbone.esyoil.com",
-                accept: "application/json, text/plain, */*",
-                "content-type": "application/json",
-                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.25 Safari/537.36",
-                origin: "https://www.esyoil.com",
-                referer: "https://www.esyoil.com/",
-                "accept-language": "de,en;q=0.9",
-            },
-            data: JSON.stringify({
-                zipcode: this.config.plz,
-                amount: parsedAmount,
-                unloading_points: Number(this.config.unloading_points),
-                payment_type: this.config.payment_type,
-                prod: this.config.prod,
-                hose: this.config.hose,
-                short_vehicle: this.config.short_vehicle,
-                deliveryTimes: this.config.deliveryTimes,
-            }),
-        })
-            .then(async (res) => {
-                this.log.debug(JSON.stringify(res.data));
-                if (!res.data) {
-                    return;
-                }
-
-                this.setState("info.connection", true, true);
-                await this.setObjectNotExistsAsync(amount, {
-                    type: "device",
-                    common: {
-                        name: "Preise für " + amount + "l",
-                    },
-                    native: {},
-                });
-                this.extractKeys(this, amount, res.data);
-            })
-            .catch((error) => {
-                this.setState("info.connection", false, true);
-                this.log.error(error);
-                this.log.error("Failed to receive EsyOil please check your zip code");
-                error.response && this.log.debug(JSON.stringify(error.response.data));
+        try {
+            const res = await this.requestClient({
+                method: "post",
+                url: "https://backbone.esyoil.com/heating-oil-calculator/v1/calculate",
+                headers: {
+                    authority: "backbone.esyoil.com",
+                    accept: "application/json, text/plain, */*",
+                    "content-type": "application/json",
+                    "user-agent":
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.25 Safari/537.36",
+                    origin: "https://www.esyoil.com",
+                    referer: "https://www.esyoil.com/",
+                    "accept-language": "de,en;q=0.9",
+                },
+                data: JSON.stringify({
+                    zipcode: this.config.plz,
+                    amount: parsedAmount,
+                    unloading_points: Number(this.config.unloading_points),
+                    payment_type: this.config.payment_type,
+                    prod: this.config.prod,
+                    hose: this.config.hose,
+                    short_vehicle: this.config.short_vehicle,
+                    deliveryTimes: this.config.deliveryTimes,
+                }),
             });
+            if (!res.data) {
+                this.log.debug(`EsyOil returned an empty response for ${amount}l.`);
+                return false;
+            }
+            this.log.debug(JSON.stringify(res.data));
+
+            await this.setObjectNotExistsAsync(amount, {
+                type: "device",
+                common: {
+                    name: "Preise für " + amount + "l",
+                },
+                native: {},
+            });
+            this.extractKeys(this, amount, res.data);
+            return true;
+        } catch (error) {
+            this.handleRequestError(error, `EsyOil (${amount}l)`);
+            return false;
+        }
     }
     async getHo24(amount, country) {
         let url = "https://www.heizoel24.de/api/kalkulation/berechnen";
@@ -130,7 +219,8 @@ class Heizoel extends utils.Adapter {
             if (dynamicValueState && dynamicValueState.val) {
                 parsedAmount = Number(dynamicValueState.val);
             } else {
-                return;
+                this.log.debug("Heizöl24: no dynamicAmount set, skipping dynamic request.");
+                return false;
             }
         }
         const data = {
@@ -227,44 +317,45 @@ class Heizoel extends utils.Adapter {
             Ordering: 0,
             UpsellCount: 0,
         };
+        let source = "Heizöl24 DE";
         if (country === 2) {
             url = "https://www.heizoel24.at/api/kalkulation/berechnen";
             data.Product.Id = 6;
+            source = "Heizöl24 AT";
         }
-        await this.requestClient({
-            method: "post",
-            url: url,
-            headers: {
-                accept: "application/json, text/plain, */*",
-                "content-type": "application/json;charset=UTF-8",
-                "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.25 Safari/537.36",
-                origin: "https://www.heizoel24.de",
-                "accept-language": "de,en;q=0.9",
-            },
-            data: data,
-        })
-            .then(async (res) => {
-                this.log.debug(JSON.stringify(res.data));
-                if (!res.data || !res.data.Items) {
-                    return;
-                }
-
-                this.setState("info.connection", true, true);
-                await this.setObjectNotExistsAsync("hoe" + amount, {
-                    type: "device",
-                    common: {
-                        name: "Heizöl24 Preise für " + amount + "l",
-                    },
-                    native: {},
-                });
-                this.extractKeys(this, "hoe" + amount, res.data, null, true);
-            })
-            .catch((error) => {
-                this.setState("info.connection", false, true);
-                this.log.error("Failed to receive HOE24 please check your zip code");
-                this.log.error(error);
-                error.response && this.log.debug(JSON.stringify(error.response.data));
+        try {
+            const res = await this.requestClient({
+                method: "post",
+                url: url,
+                headers: {
+                    accept: "application/json, text/plain, */*",
+                    "content-type": "application/json;charset=UTF-8",
+                    "user-agent":
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/93.0.4577.25 Safari/537.36",
+                    origin: "https://www.heizoel24.de",
+                    "accept-language": "de,en;q=0.9",
+                },
+                data: data,
             });
+            if (!res.data || !res.data.Items) {
+                this.log.debug(`${source} (${amount}l): response without offers (Items).`);
+                return false;
+            }
+            this.log.debug(JSON.stringify(res.data));
+
+            await this.setObjectNotExistsAsync("hoe" + amount, {
+                type: "device",
+                common: {
+                    name: "Heizöl24 Preise für " + amount + "l",
+                },
+                native: {},
+            });
+            this.extractKeys(this, "hoe" + amount, res.data, null, true);
+            return true;
+        } catch (error) {
+            this.handleRequestError(error, `${source} (${amount}l)`);
+            return false;
+        }
     }
     /**
      * Is called when adapter shuts down - callback has to be called under any circumstances!
@@ -275,6 +366,7 @@ class Heizoel extends utils.Adapter {
             clearInterval(this.updateInterval);
             callback();
         } catch (e) {
+            this.log.debug("Error during unload: " + e);
             callback();
         }
     }
