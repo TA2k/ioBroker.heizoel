@@ -20,6 +20,10 @@ Adapter fragt regelmässig die Heizölpreise ab
 
 ## Changelog
 
+
+### **WORK IN PROGRESS**
+- (ioBroker-Bot) Adapter requires js-controller >= 6.0.11 now.
+
 ### 1.0.0
 
 -   (TA2k) initial release
